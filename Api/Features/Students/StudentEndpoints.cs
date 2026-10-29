@@ -40,14 +40,21 @@ public static class StudentEndpoints
 
     private static async Task<IResult> Create(
         CreateStudentCommand command,
-        ICommandHandler<CreateStudentCommand, Result<CreateStudentResponse>> handler,
-        CancellationToken cancellationToken)
+       
+ICommandHandler<CreateStudentCommand, Result<CreateStudentResponse>> handler,
+CancellationToken cancellationToken)
+{
+    var result = await handler.HandleAsync(command, cancellationToken);
+
+    if (!result.IsSuccess)
     {
-        var result = await handler.HandleAsync(command, cancellationToken);
-        return result.IsSuccess
-            ? TypedResults.CreatedAtRoute(result.Value, "GetByIdRouteName" , new { id = result.Value!.Id })
-            : result.ToProblemDetails();
+        return result.ToProblemDetails();
     }
+
+    var value = result.Value!;
+
+    return Results.Created($"/api/students/{value.Id}", value);
+}
 
     private static async Task<IResult> GetById(
         Guid id,
